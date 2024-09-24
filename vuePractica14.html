@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html>
+
+<!-- 	Agarre el repositorio que uso en una tarea pq mi código de esa actvidad no jalaba del todo 
+ -->
+
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title></title>
+	<style type="text/css">
+		input {
+			background-color: gray;
+		}
+
+		table.customTable {
+			width: 100%;
+			background-color: #696161;
+			border-collapse: collapse;
+			border-width: 2px;
+			border-color: #7EA8F8;
+			border-style: solid;
+			color: #000000;
+		}
+
+		table.customTable td,
+		table.customTable th {
+			border-width: 2px;
+			border-color: #BFD641;
+			border-style: solid;
+			padding: 5px;
+		}
+
+		table.customTable thead {
+			background-color: #2f8b7e;
+		}
+
+		#edit-form {
+			margin-top: 20px;
+		}
+	</style>
+</head>
+
+<body>
+	<div id="main">
+		<h3>Hola a la aplicación: {{ name_app }}</h3>
+		<hr>
+
+		<form @submit.prevent="login" v-if="!is_log">
+			<fieldset>
+				<label>Email</label>
+				<input type="email" v-model="email" placeholder="Escribe aquí" required>
+			</fieldset>
+
+			<fieldset>
+				<label>Password</label>
+				<input type="password" v-model="password" placeholder="Escribe aquí" required>
+			</fieldset>
+
+			<button type="submit">Acceder</button>
+		</form>
+
+		<h1 v-if="is_log">Bienvenido usuario</h1>
+
+		<div v-if="is_log">
+			<table class="customTable">
+				<thead>
+					<tr>
+						<th>Nombre</th>
+						<th>Username</th>
+						<th>Email</th>
+						<th>Acciones</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr v-for="user in users" :key="user.id">
+						<td>{{ user.name }}</td>
+						<td>{{ user.username }}</td>
+						<td>{{ user.email }}</td>
+						<td>
+							<button @click="editUser(user)">Editar</button>
+							<button @click="deleteUser(user)">Eliminar</button>
+						</td>
+					</tr>
+				</tbody>
+			</table>
+
+			editar
+			<div id="edit-form" v-if="editingUser">
+				<h3>Editando a: {{ editingUser.name }}</h3>
+				<form @submit.prevent="updateUser">
+					<fieldset>
+						<label>Nombre</label>
+						<input type="text" v-model="editingUser.name" required>
+					</fieldset>
+
+					<fieldset>
+						<label>Username</label>
+						<input type="text" v-model="editingUser.username" required>
+					</fieldset>
+
+					<fieldset>
+						<label>Email</label>
+						<input type="email" v-model="editingUser.email" required>
+					</fieldset>
+
+					<button type="submit">Guardar Cambios</button>
+					<button type="button" @click="cancelEdit">Cancelar</button>
+				</form>
+			</div>
+		</div>
+		<hr>
+	</div>
+
+	<script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+	<script>
+		const { createApp, ref } = Vue
+
+		createApp({
+			setup() {
+				const name_app = ref('Mi primer app');
+				let email = ref('jsoto@uabcs.mx');
+				let password = ref('123123123');
+				let is_log = ref(false);
+				let users = ref([]);
+				let editingUser = ref(null);
+
+				return {
+					name_app,
+					email,
+					password,
+					is_log,
+					users,
+					editingUser
+				}
+			},
+			methods: {
+				login() {
+					fetch("users.json")
+						.then(response => response.json())
+						.then(response => {
+							response.forEach((e) => {
+								if (e.email === this.email && e.password === this.password) {
+									this.is_log = true;
+									localStorage.setItem("user_data", JSON.stringify(e));
+								}
+							});
+
+							if (!this.is_log) {
+								alert("Verifique su información");
+							}
+						});
+				},
+
+				editUser(user) {
+					this.editingUser = { ...user };
+				},
+
+				updateUser() {
+					const userIndex = this.users.findIndex(u => u.id === this.editingUser.id);
+					if (userIndex !== -1) {
+						this.users[userIndex] = { ...this.editingUser };
+						this.editingUser = null;
+					}
+				},
+
+				cancelEdit() {
+					this.editingUser = null; o
+				},
+
+				deleteUser(user) {
+					this.users = this.users.filter(u => u.id !== user.id);
+					alert(`Usuario ${user.name} eliminado`);
+				}
+			},
+			mounted() {
+				fetch("users.json")
+					.then(response => response.json())
+					.then(response => {
+						this.users = response;
+					});
+
+				const user_data = localStorage.getItem("user_data");
+				if (user_data !== null) {
+					this.is_log = true;
+				}
+			}
+		}).mount('#main');
+	</script>
+</body>
+
+</html>
